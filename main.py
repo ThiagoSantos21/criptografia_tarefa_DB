@@ -26,7 +26,6 @@ client = MongoClient("mongodb+srv://thiago:1234qwer@cluster0.ez0960m.mongodb.net
 # Send a ping to confirm a successful connection
 try:
     client.admin.command('ping')
-    print("Pinged your deployment. You successfully connected to MongoDB!")
 except Exception as e:
     print(e)
 
@@ -56,9 +55,13 @@ def enviar_mensagem():
     # print(f"string para gerar a mensagem: {mensagem}")
 
 def gerar_json(user, mensagem):
+    if user == 'Alice':
+        user2 = 'Bob'
+    else :
+        user2 = 'Alice'    
     dados = {
         "from": user,
-        "to": "Thiago",
+        "to": user2,
         "wasRead": False,
         "message": mensagem.decode('utf-8')
     }
@@ -89,7 +92,8 @@ def enviar_para_mongodb(nome_arquivo):
 
     print("Arquivo JSON enviado para o MongoDB com sucesso!")
 
-def ler_mensagens(chave):
+def ler_mensagens():
+    os.system('cls')
     # Selecionar o banco de dados
     db = client['ChatEncrypt']
 
@@ -97,17 +101,35 @@ def ler_mensagens(chave):
     collection = db['Chat']
 
     # Consultar as mensagens na coleção
-    mensagens = collection.find()
+    mensagens = collection.find({'wasRead' : False})
+    if not mensagens:
+        print('Não possui mensagens para ser lidas')    
+        return
+    
+    for index, mensagem in enumerate(mensagens):
+        print(f'{index+1}) {mensagem["message"]}')
+
+    indexMensagem = -1
+
+    while indexMensagem < 0 or indexMensagem > int(len(mensagem)) - 1:
+        indexMensagem = int(input("\nQual das mensagens voce deseja decifrar? "))
+
+    chave = input('\nDigite a chave da mensagem escolhida: ')
 
     fernet = Fernet(chave)
 
     # Exibir as mensagens
+    mensagemCifrada = mensagens[indexMensagem]['message']
+    mensagemDecifrada = fernet.decrypt(mensagemCifrada).decode('utf-8')
+    print(mensagemDecifrada)
+
+    """ 
     for mensagemBD in mensagens:
         print(f"Mensagem de: {mensagemBD['from']}")
         mensagem_cifrada = mensagemBD['message'].encode('utf-8')
         mensagem_decifrada = fernet.decrypt(mensagem_cifrada).decode('utf-8')
         print(f"Mensagem: {mensagem_decifrada}")
-        print()
+        print() """
 
 
 def menu():
@@ -124,9 +146,7 @@ def menu():
             gerar_json(user, mensagem)
             enviar_para_mongodb("message.json")
         case 'B' :
-            print('Digite a chave para decifrar a mensagem: ', end='')
-            chave = input().encode('utf-8')
-            ler_mensagens(chave)
+            ler_mensagens()
         case _ :
             print('Opção inválida - Refaça a operação')
             menu()
