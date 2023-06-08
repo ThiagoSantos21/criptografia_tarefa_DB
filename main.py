@@ -115,13 +115,13 @@ def ler_mensagens():
         indexMensagem = int(input("\nQual das mensagens voce deseja decifrar? "))
 
     chave = input('\nDigite a chave da mensagem escolhida: ')
-
-    fernet = Fernet(chave)
-
+    fernet = Fernet(chave.encode('utf-8'))
     # Exibir as mensagens
     mensagemCifrada = mensagens[indexMensagem]['message']
     mensagemDecifrada = fernet.decrypt(mensagemCifrada).decode('utf-8')
     print(mensagemDecifrada)
+    print("Chave incorreta tente novamente")
+    ler_mensagens()
 
     """ 
     for mensagemBD in mensagens:
@@ -133,9 +133,24 @@ def ler_mensagens():
 
 
 def menu():
-    print('Login: ', end='')
-    user = input()
-    print(f'Olá {user}, o que deseja fazer ?')
+
+    print('Escolha um usuário: ')
+    print('A) Alice')
+    print('B) Bob')
+    
+    op_user = input()
+    op_user = str.upper(op_user)
+    match op_user:
+        case 'A':
+            user = "Alice"
+            print('Olá Alice, o que deseja fazer ?')
+        case 'B' :
+            user = "Bob"
+            print('Olá Bob, o que deseja fazer ?')
+        case _ :
+            print('Opção inválida - Refaça a operação')
+            menu()
+
     print('A) Enviar uma mensagem')
     print('B) Ler mensagens do banco')
     op = input()
