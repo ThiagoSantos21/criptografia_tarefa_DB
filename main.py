@@ -48,18 +48,26 @@ def enviar_mensagem():
     mensagem_chave = input()
     chave = gerar_chave_fernet(mensagem_chave.encode('utf-8'))
     fernet = Fernet(chave)
+    mensagem_criptografada = fernet.encrypt(mensagem.encode('utf-8'))
 
-    return fernet.encrypt(mensagem.encode('utf-8'))
        
+    return mensagem_criptografada
     # print(f"string para gerar a chave: {mensagem_chave}")
     # print(f"chave gerada: {chave}")
     # print(f"string para gerar a mensagem: {mensagem}")
 
-def gerar_json(user, mensagem):
-    if user == 'Alice':
+def enviar_para_mongodb(user, mensagem):
+    # Selecionar o banco de dados
+    db = client['ChatEncrypt']
+
+    # Selecionar a coleção
+    collection = db['Chat']
+
+    if (user == 'Bob'):
+        user2 = 'Alice'
+    else:
         user2 = 'Bob'
-    else :
-        user2 = 'Alice'    
+
     dados = {
         "from": user,
         "to": user2,
@@ -67,31 +75,10 @@ def gerar_json(user, mensagem):
         "message": mensagem
     }
 
-    # Caminho e nome do arquivo JSON
-    nome_arquivo = 'message.json'
-
-    # Abrir o arquivo JSON em modo de escrita
-    with open(nome_arquivo, 'w') as arquivo:
-        # Escrever os dados no arquivo JSON
-        json.dump(dados, arquivo)
-
-    print("Arquivo JSON gerado com sucesso!")
-
-def enviar_para_mongodb(nome_arquivo):
-    # Selecionar o banco de dados
-    db = client['ChatEncrypt']
-
-    # Selecionar a coleção
-    collection = db['Chat']
-
-    # Ler o arquivo JSON
-    with open(nome_arquivo, 'r') as arquivo:
-        dados = json.load(arquivo)
-
     # Inserir os dados na coleção
     collection.insert_one(dados)
 
-    print("Arquivo JSON enviado para o MongoDB com sucesso!")
+    print("Arquivo enviado para o MongoDB com sucesso!")
 
 def ler_mensagens():
     os.system('cls')
@@ -107,31 +94,20 @@ def ler_mensagens():
         print('Não possui mensagens para ser lidas')    
         return
     
+    listaMensagens = []
+
     for index, mensagem in enumerate(mensagens):
+        listaMensagens.append(mensagem["message"])
         print(f'{index+1}) {mensagem["message"]}')
-
-    indexMensagem = -1
-
-    while indexMensagem < 0 or indexMensagem > int(len(mensagem)) - 1:
-        indexMensagem = int(input("\nQual das mensagens voce deseja decifrar? "))
+        
+    indexMensagem = int(input("\nQual das mensagens voce deseja decifrar? "))
 
     chave = input('\nDigite a chave da mensagem escolhida: ')
     fernet = Fernet(gerar_chave_fernet(chave.encode('utf-8')))
     # Exibir as mensagens
-    mensagemCifrada = mensagens[indexMensagem-1]['message']
+    mensagemCifrada = listaMensagens[indexMensagem -1]
     mensagemDecifrada = fernet.decrypt(mensagemCifrada).decode('utf-8')
     print(mensagemDecifrada)
-    print("Chave incorreta tente novamente")
-    ler_mensagens()
-
-    """ 
-    for mensagemBD in mensagens:
-        print(f"Mensagem de: {mensagemBD['from']}")
-        mensagem_cifrada = mensagemBD['message'].encode('utf-8')
-        mensagem_decifrada = fernet.decrypt(mensagem_cifrada).decode('utf-8')
-        print(f"Mensagem: {mensagem_decifrada}")
-        print() """
-
 
 def menu():
 
@@ -159,8 +135,7 @@ def menu():
     match op:
         case 'A':
             mensagem = enviar_mensagem()
-            gerar_json(user, mensagem)
-            enviar_para_mongodb("message.json")
+            enviar_para_mongodb(user, mensagem)
         case 'B' :
             ler_mensagens()
         case _ :
