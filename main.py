@@ -30,6 +30,7 @@ except Exception as e:
     print(e)
 
 
+
 # para gerar uma chave no fernet precisamos
 # garantir que essa "string" depois de transformada em bytes
 # gere uma chave em bytes que possa ser "codada" em base64 (apenas uma exigência do modo Fernet CBC)
@@ -63,7 +64,7 @@ def gerar_json(user, mensagem):
         "from": user,
         "to": user2,
         "wasRead": False,
-        "message": mensagem.decode('utf-8')
+        "message": mensagem
     }
 
     # Caminho e nome do arquivo JSON
@@ -115,9 +116,9 @@ def ler_mensagens():
         indexMensagem = int(input("\nQual das mensagens voce deseja decifrar? "))
 
     chave = input('\nDigite a chave da mensagem escolhida: ')
-    fernet = Fernet(chave.encode('utf-8'))
+    fernet = Fernet(gerar_chave_fernet(chave.encode('utf-8')))
     # Exibir as mensagens
-    mensagemCifrada = mensagens[indexMensagem]['message']
+    mensagemCifrada = mensagens[indexMensagem-1]['message']
     mensagemDecifrada = fernet.decrypt(mensagemCifrada).decode('utf-8')
     print(mensagemDecifrada)
     print("Chave incorreta tente novamente")
